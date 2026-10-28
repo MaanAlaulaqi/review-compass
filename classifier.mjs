@@ -9,7 +9,7 @@ export function classify(text, model) {
   }
   for (let i = 0; i < tokens.length; i++) {
     add(tokens[i]);
-    if (i + 1 < tokens.length) add(tokens[i] + " " + tokens[i + 1]);
+    if (i + 1 < tokens.length) add(`${tokens[i]} ${tokens[i + 1]}`);
   }
   const values = [];
   let norm = 0;

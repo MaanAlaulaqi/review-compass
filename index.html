@@ -50,10 +50,10 @@
       </section>
 
       <nav aria-label="Workspace">
-        <button data-tab="review" class="active">Review explorer</button>
-        <button data-tab="product">Product snapshot</button>
-        <button data-tab="evidence">Experiment results</button>
-        <button data-tab="extraction">Extraction audit</button>
+        <button type="button" data-tab="review" class="active">Review explorer</button>
+        <button type="button" data-tab="product">Product snapshot</button>
+        <button type="button" data-tab="evidence">Experiment results</button>
+        <button type="button" data-tab="extraction">Extraction audit</button>
       </nav>
 
       <section id="review" class="panel active">
@@ -90,10 +90,10 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
             >
 
             <div class="row">
-              <button id="analyse" class="primary" disabled>
+              <button type="submit" id="analyse" class="primary" disabled>
                 Loading classifier…
               </button>
-              <button id="example" class="secondary">
+              <button type="submit" id="example" class="secondary">
                 Try another example
               </button>
             </div>
@@ -144,7 +144,7 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
             placeholder="Excellent quality, exactly what I needed.&#10;The bottle broke on the first day."
           ></textarea>
 
-          <button class="secondary" id="batchAnalyse" disabled>
+          <button type="submit" class="secondary" id="batchAnalyse" disabled>
             Analyse batch
           </button>
           <div id="batchResults"></div>
@@ -178,7 +178,7 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
             placeholder="https://www.amazon.com/dp/…"
           />
 
-          <button id="lookup" class="primary" disabled>
+          <button type="submit" id="lookup" class="primary" disabled>
             Load stored reviews
           </button>
           <p id="productMessage" role="status"></p>
@@ -357,7 +357,7 @@ The scent is lovely, but the packaging leaked.</textarea
             </div>
           </div>
 
-          <button id="audit" class="secondary">Check exact grounding</button>
+          <button type="submit" id="audit" class="secondary">Check exact grounding</button>
           <p id="auditResult" role="status"></p>
 
           <h3>Emotion exploration</h3>
