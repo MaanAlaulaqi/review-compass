@@ -4,7 +4,7 @@ const $ = (id) => document.getElementById(id);
 
 let model, snapshot, research;
 
-const escape = (value) =>
+const escapeThis = (value) =>
   String(value).replace(
     /[&<>"']/g,
     (character) =>
@@ -39,7 +39,7 @@ function activate(name) {
 
 function navigate(name) {
   activate(name);
-  history.replaceState(null, "", "#" + name);
+  history.replaceState(null, "", `#${name}`);
 }
 
 for (const button of document.querySelectorAll("nav button")) {
@@ -88,7 +88,7 @@ function analyse() {
     .map(
       (label, index) => `
         <div class="barrow">
-          <span>${escape(label)}</span>
+          <span>${escapeThis(label)}</span>
           <div class="track">
             <div
               class="fill"
@@ -169,8 +169,8 @@ $("batchAnalyse").onclick = () => {
             .map(
               (row) => `
                 <tr>
-                  <td>${escape(row.text)}</td>
-                  <td>${escape(predictionLabel(row))}</td>
+                  <td>${escapeThis(row.text)}</td>
+                  <td>${escapeThis(predictionLabel(row))}</td>
                   <td>${row.features}</td>
                 </tr>
               `,
@@ -190,7 +190,7 @@ $("batchAnalyse").onclick = () => {
   `;
 
   $("downloadBatch").onclick = () => {
-    const quote = (value) => '"' + String(value).replaceAll('"', '""') + '"';
+    const quote = (value) => `"${String(value).replaceAll('"', '""')}"`;
 
     const content =
       "text,predicted_sentiment,matched_features\n" +
@@ -224,7 +224,7 @@ $("batchAnalyse").onclick = () => {
 $("productSelect").onchange = () => {
   const id = $("productSelect").value;
 
-  $("productUrl").value = id ? "https://www.amazon.com/dp/" + id : "";
+  $("productUrl").value = id ? `https://www.amazon.com/dp/${id}` : "";
 };
 
 // Historical product lookup
@@ -260,7 +260,7 @@ $("lookup").onclick = () => {
       );
 
       const validHost = allowed.some(
-        (host) => url.hostname === host || url.hostname.endsWith("." + host),
+        (host) => url.hostname === host || url.hostname.endsWith(`.${host}`),
       );
 
       if (url.protocol !== "https:" || !validHost || !match) {
@@ -294,13 +294,13 @@ $("lookup").onclick = () => {
       return `
         <article class="card">
           <span class="pill">
-            ${escape(predictionLabel(result))}
+            ${escapeThis(predictionLabel(result))}
           </span>
           <p class="small">
-            Product: ${escape(review.product_id)}
+            Product: ${escapeThis(review.product_id)}
             · ${result.features} matched features
           </p>
-          <p>${escape(review.text)}</p>
+          <p>${escapeThis(review.text)}</p>
           ${
             result.features === 0
               ? `<p class="small">
@@ -340,7 +340,7 @@ async function init() {
         const response = await fetch(url);
 
         if (!response.ok) {
-          throw new Error("Could not load " + url);
+          throw new Error(`Could not load ${url}`);
         }
 
         return response.json();
@@ -376,8 +376,8 @@ async function init() {
       [...counts.entries()]
         .map(
           ([id, count]) => `
-            <option value="${escape(id)}">
-              ${escape(id)} (${count} reviews)
+            <option value="${escapeThis(id)}">
+              ${escapeThis(id)} (${count} reviews)
             </option>
           `,
         )
@@ -389,7 +389,7 @@ async function init() {
       .map(
         ([name, scores]) => `
             <tr class="${name === "DistilBERT" ? "best" : ""}">
-              <td>${escape(name)}</td>
+              <td>${escapeThis(name)}</td>
               <td>${(100 * scores.accuracy).toFixed(2)}%</td>
               <td>${scores.macro_f1.toFixed(4)}</td>
             </tr>
