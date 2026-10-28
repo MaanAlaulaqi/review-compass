@@ -4,18 +4,27 @@ const $ = (id) => document.getElementById(id);
 
 let model, snapshot, research;
 
-const escape = (s) =>
-  String(s).replace(
+const escape = (value) =>
+  String(value).replace(
     /[&<>"']/g,
-    (c) =>
+    (character) =>
       ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
         '"': "&quot;",
         "'": "&#39;",
-      })[c],
+      })[character],
   );
+
+const capitalise = (value) => value[0].toUpperCase() + value.slice(1);
+
+// Presentation label only. The underlying classifier is unchanged.
+function predictionLabel(result) {
+  return result.features === 0
+    ? "Default / no recognised features"
+    : capitalise(result.label);
+}
 
 // Navigation
 function activate(name) {
@@ -28,20 +37,32 @@ function activate(name) {
   }
 }
 
-for (const button of document.querySelectorAll("nav button")) {
-  button.onclick = () => {
-    activate(button.dataset.tab);
-    history.replaceState(null, "", "#" + button.dataset.tab);
-  };
+function navigate(name) {
+  activate(name);
+  history.replaceState(null, "", "#" + name);
 }
 
-if (
-  ["review", "product", "evidence", "extraction"].includes(
-    location.hash.slice(1),
-  )
-) {
-  activate(location.hash.slice(1));
+for (const button of document.querySelectorAll("nav button")) {
+  button.onclick = () => navigate(button.dataset.tab);
 }
+
+document.querySelector(".brand").onclick = (event) => {
+  event.preventDefault();
+  navigate("review");
+};
+
+function activateFromHash() {
+  const name = location.hash.slice(1);
+
+  activate(
+    ["review", "product", "evidence", "extraction"].includes(name)
+      ? name
+      : "review",
+  );
+}
+
+window.addEventListener("hashchange", activateFromHash);
+activateFromHash();
 
 // Individual review classification
 function analyse() {
@@ -61,29 +82,35 @@ function analyse() {
 
   const result = classify(text, model);
 
-  $("prediction").textContent =
-    result.label[0].toUpperCase() + result.label.slice(1);
+  $("prediction").textContent = predictionLabel(result);
 
   $("probabilities").innerHTML = model.labels
     .map(
-      (label, i) => `
+      (label, index) => `
         <div class="barrow">
-            <span>${escape(label)}</span>
-            <div class="track">
-                <div
-                    class="fill"
-                    style="width:${100 * result.probabilities[i]}%"
-                ></div>
-            </div>
-            <span>${(100 * result.probabilities[i]).toFixed(1)}%</span>
+          <span>${escape(label)}</span>
+          <div class="track">
+            <div
+              class="fill"
+              style="width:${100 * result.probabilities[index]}%"
+            ></div>
+          </div>
+          <span>
+            ${(100 * result.probabilities[index]).toFixed(1)}%
+          </span>
         </div>
-    `,
+      `,
     )
     .join("");
 
   $("featureCount").textContent =
-    `${result.features} vocabulary features matched · ` +
-    `trained Logistic Regression · C=${model.C}`;
+    result.features === 0
+      ? "0 vocabulary features matched. These are default " +
+        "intercept-based scores, not a meaningful sentiment " +
+        "interpretation of this text."
+      : `${result.features} vocabulary features matched · ` +
+        `trained Logistic Regression · C=${model.C}. ` +
+        "Word matches do not establish language support.";
 }
 
 const examples = [
@@ -128,37 +155,56 @@ $("batchAnalyse").onclick = () => {
   }));
 
   $("batchResults").innerHTML = `
-        <div class="tablewrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Review</th>
-                        <th>Predicted sentiment</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rows
-                      .map(
-                        (row) => `
-                        <tr>
-                            <td>${escape(row.text)}</td>
-                            <td>${escape(row.label)}</td>
-                        </tr>
-                    `,
-                      )
-                      .join("")}
-                </tbody>
-            </table>
-        </div>
-        <button class="secondary" id="downloadBatch">Download CSV</button>
-    `;
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Review</th>
+            <th>Prediction</th>
+            <th>Matched features</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              (row) => `
+                <tr>
+                  <td>${escape(row.text)}</td>
+                  <td>${escape(predictionLabel(row))}</td>
+                  <td>${row.features}</td>
+                </tr>
+              `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+    <p class="small">
+      Zero matched features means the model used only its default
+      starting scores. Other rows may still be unreliable,
+      particularly for languages outside the model's training focus.
+    </p>
+    <button class="secondary" id="downloadBatch">
+      Download CSV
+    </button>
+  `;
 
   $("downloadBatch").onclick = () => {
     const quote = (value) => '"' + String(value).replaceAll('"', '""') + '"';
 
     const content =
-      "text,predicted_sentiment\n" +
-      rows.map((row) => [row.text, row.label].map(quote).join(",")).join("\n");
+      "text,predicted_sentiment,matched_features\n" +
+      rows
+        .map((row) =>
+          [
+            row.text,
+            row.features === 0 ? "default_no_recognised_features" : row.label,
+            row.features,
+          ]
+            .map(quote)
+            .join(","),
+        )
+        .join("\n");
 
     const url = URL.createObjectURL(
       new Blob([content], { type: "text/csv;charset=utf-8" }),
@@ -242,17 +288,30 @@ $("lookup").onclick = () => {
       "Choose an available product above.";
 
   $("productResults").innerHTML = rows
-    .map(
-      (review) => `
+    .map((review) => {
+      const result = classify(review.text, model);
+
+      return `
         <article class="card">
-            <span class="pill">
-                ${escape(classify(review.text, model).label)}
-            </span>
-            <p class="small">Product: ${escape(review.product_id)}</p>
-            <p>${escape(review.text)}</p>
+          <span class="pill">
+            ${escape(predictionLabel(result))}
+          </span>
+          <p class="small">
+            Product: ${escape(review.product_id)}
+            · ${result.features} matched features
+          </p>
+          <p>${escape(review.text)}</p>
+          ${
+            result.features === 0
+              ? `<p class="small">
+                   Default intercept-based result.
+                   No vocabulary features matched this review.
+                 </p>`
+              : ""
+          }
         </article>
-    `,
-    )
+      `;
+    })
     .join("");
 };
 
@@ -288,7 +347,22 @@ async function init() {
       }),
     );
 
-    // Populate this only after snapshot.json has loaded.
+    // Compute the fallback from the loaded model rather than
+    // hardcoding percentages that could change after retraining.
+    const fallback = classify("", model);
+
+    $("defaultScores").textContent =
+      "Default scores when zero features match: " +
+      model.labels
+        .map(
+          (label, index) =>
+            `${capitalise(label)} ` +
+            `${(100 * fallback.probabilities[index]).toFixed(1)}%`,
+        )
+        .join(" · ") +
+      ".";
+
+    // Populate the product dropdown after snapshot.json has loaded.
     const counts = new Map();
 
     for (const review of snapshot) {
@@ -296,29 +370,30 @@ async function init() {
     }
 
     $("productSelect").innerHTML =
-      `<option value="">All stored reviews (${snapshot.length})</option>` +
+      `<option value="">
+         All stored reviews (${snapshot.length})
+       </option>` +
       [...counts.entries()]
         .map(
           ([id, count]) => `
-                    <option value="${escape(id)}">
-                        ${escape(id)} (${count} reviews)
-                    </option>
-                `,
+            <option value="${escape(id)}">
+              ${escape(id)} (${count} reviews)
+            </option>
+          `,
         )
         .join("");
 
-    // The handler is already defined above.
     $("productSelect").onchange();
 
     $("scoreTable").innerHTML = Object.entries(research.sentiment.scores)
       .map(
         ([name, scores]) => `
-                    <tr class="${name === "DistilBERT" ? "best" : ""}">
-                        <td>${escape(name)}</td>
-                        <td>${(100 * scores.accuracy).toFixed(2)}%</td>
-                        <td>${scores.macro_f1.toFixed(4)}</td>
-                    </tr>
-                `,
+            <tr class="${name === "DistilBERT" ? "best" : ""}">
+              <td>${escape(name)}</td>
+              <td>${(100 * scores.accuracy).toFixed(2)}%</td>
+              <td>${scores.macro_f1.toFixed(4)}</td>
+            </tr>
+          `,
       )
       .join("");
 
@@ -345,9 +420,14 @@ async function init() {
     $("analyse").disabled = false;
     $("analyse").textContent = "Analyse review";
     $("batchAnalyse").disabled = false;
+    $("lookup").disabled = false;
   } catch (error) {
     $("prediction").textContent = "Could not load the dashboard data.";
     $("featureCount").textContent = error.message;
+    $("defaultScores").textContent =
+      "Default scores unavailable because dashboard loading failed.";
+    $("productMessage").textContent =
+      "Stored reviews are unavailable because dashboard loading failed.";
   }
 }
 
