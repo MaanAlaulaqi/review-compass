@@ -4,8 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#0d1117" />
+    <meta name="theme-color" content="#080809" />
     <script src="theme.js"></script>
+
     <title>Review Compass · MAAI 902</title>
     <meta
       name="description"
@@ -16,21 +17,23 @@
 
   <body>
     <header>
-      <a class="brand" href="#review"
-        ><span class="mark">◈</span> REVIEW COMPASS</a
-      >
+      <a class="brand" href="#review">
+        <span class="mark">◈</span> REVIEW COMPASS
+      </a>
+
       <div class="header-tools">
-        <span class="course">MAAI 902 / APPLIED NLP</span
-        ><button
+        <span class="course">MAAI 902 / APPLIED NLP</span>
+        <button
           id="themeToggle"
           class="theme-toggle"
           type="button"
           aria-label="Switch to light mode"
         >
-          Light mode
+          🤓
         </button>
       </div>
     </header>
+
     <main>
       <section class="hero">
         <p class="eyebrow">FROM CUSTOMER WORDS TO INSPECTABLE EVIDENCE</p>
@@ -40,17 +43,38 @@
           results—and the limits—of a product-disjoint NLP experiment.
         </p>
         <div class="badges">
-          <span>7,500 training reviews</span><span>900 held-out reviews</span
-          ><span>649 test products</span>
+          <span>7,500 training reviews</span>
+          <span>900 held-out reviews</span>
+          <span>649 test products</span>
         </div>
       </section>
+
       <nav aria-label="Workspace">
-        <button data-tab="review" class="active">Review explorer</button
-        ><button data-tab="product">Product snapshot</button
-        ><button data-tab="evidence">Experiment results</button
-        ><button data-tab="extraction">Extraction audit</button>
+        <button data-tab="review" class="active">Review explorer</button>
+        <button data-tab="product">Product snapshot</button>
+        <button data-tab="evidence">Experiment results</button>
+        <button data-tab="extraction">Extraction audit</button>
       </nav>
+
       <section id="review" class="panel active">
+        <div class="note">
+          <strong>Language and default predictions</strong>
+          <p>
+            This English-focused classifier does not detect the input language.
+            Text in another language may accidentally match familiar words,
+            producing an unreliable prediction.
+          </p>
+          <p id="defaultScores" role="status">
+            Loading the model's default scores…
+          </p>
+          <p>
+            When zero vocabulary features match, the displayed percentages come
+            entirely from the model's starting scores. The result is labelled
+            “Default / no recognised features” rather than being presented as a
+            sentiment interpretation.
+          </p>
+        </div>
+
         <div class="grid">
           <article class="card">
             <p class="eyebrow">01 / TRY THE TRAINED BASELINE</p>
@@ -59,78 +83,109 @@
               The browser runs our fitted TF-IDF + Logistic Regression
               classifier. Your text stays in this page.
             </p>
-            <label for="reviewText">Review title and body</label
-            ><textarea id="reviewText" maxlength="12000">
+
+            <label for="reviewText">Review title and body</label>
+            <textarea id="reviewText" maxlength="12000">
 The packaging looks attractive, but the bottle leaked and the scent faded quickly.</textarea
             >
+
             <div class="row">
               <button id="analyse" class="primary" disabled>
-                Loading classifier…</button
-              ><button id="example" class="secondary">
+                Loading classifier…
+              </button>
+              <button id="example" class="secondary">
                 Try another example
               </button>
             </div>
+
             <p class="small">
               Three rating-derived classes: negative · neutral · positive. These
               are opinions inferred from text, not verified product facts.
             </p>
           </article>
+
           <article class="card result">
             <p class="eyebrow">PREDICTION</p>
-            <h2 id="prediction">Ready when you are.</h2>
+            <h2 id="prediction" aria-live="polite">Ready when you are.</h2>
             <div id="probabilities" aria-live="polite"></div>
             <p id="featureCount" class="small"></p>
+
             <div class="note">
-              <strong>Read the scores carefully.</strong><br />Model scores are
-              uncalibrated. A low score does not create a separate “uncertain”
-              class. Neutral includes reviews associated with three-star
-              ratings, which can contain mixed opinions.
+              <strong>Read the scores carefully.</strong>
+              <p>
+                Model scores are uncalibrated. They are not verified
+                probabilities of correctness. A low score does not create a
+                separate “uncertain” class.
+              </p>
+              <p>
+                Neutral includes reviews associated with three-star ratings,
+                which can contain mixed opinions. Matching some vocabulary
+                features does not establish that the model understands the input
+                language.
+              </p>
             </div>
           </article>
         </div>
+
         <article class="card batch">
           <h2>Compare a batch</h2>
           <p class="muted">
             One review per line, up to 100 reviews. A convenient demo input
             format; no live Amazon acquisition.
           </p>
-          <label for="batchText">Reviews</label
-          ><textarea
+          <p class="small">
+            Rows with zero matched features are labelled as default predictions.
+            This distinction is also included in CSV exports.
+          </p>
+
+          <label for="batchText">Reviews</label>
+          <textarea
             id="batchText"
             placeholder="Excellent quality, exactly what I needed.&#10;The bottle broke on the first day."
-          ></textarea
-          ><button class="secondary" id="batchAnalyse" disabled>
+          ></textarea>
+
+          <button class="secondary" id="batchAnalyse" disabled>
             Analyse batch
           </button>
           <div id="batchResults"></div>
         </article>
       </section>
+
       <section id="product" class="panel">
         <article class="card">
           <p class="eyebrow">02 / AMAZON LINK LOOKUP</p>
           <h2>A historical snapshot, with its limits visible.</h2>
+
           <div class="note">
             This searches
-            <strong
-              >142 stored training reviews across eight parent product
-              IDs</strong
-            >. It does not scrape Amazon or fetch current reviews. The sample is
-            class-balanced, so its proportions do not estimate product-wide
-            customer satisfaction. Variant ASINs may differ from these parent
-            IDs.
+            <strong>
+              142 stored training reviews across eight parent product IDs </strong
+            >. It does not scrape Amazon or fetch current reviews. The research
+            splits were class-balanced, but this smaller snapshot is not. Its
+            proportions do not estimate product-wide customer satisfaction.
+            Variant ASINs may differ from these parent IDs.
           </div>
-          <label for="productSelect">Choose a product or view all reviews</label
-          ><select id="productSelect"></select
-          ><label for="productUrl">Amazon product URL</label
-          ><input
+
+          <label for="productSelect">
+            Choose a product or view all reviews
+          </label>
+          <select id="productSelect"></select>
+
+          <label for="productUrl">Amazon product URL</label>
+          <input
             id="productUrl"
             type="url"
             placeholder="https://www.amazon.com/dp/…"
-          /><button id="lookup" class="primary">Load stored reviews</button>
+          />
+
+          <button id="lookup" class="primary" disabled>
+            Load stored reviews
+          </button>
           <p id="productMessage" role="status"></p>
           <div id="productResults"></div>
         </article>
       </section>
+
       <section id="evidence" class="panel">
         <article class="card">
           <p class="eyebrow">03 / MEASURED RESULTS</p>
@@ -140,6 +195,7 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
             duplicate texts do not cross dataset splits. Single training seed,
             one product category.
           </p>
+
           <div class="tablewrap">
             <table>
               <thead>
@@ -152,19 +208,22 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
               <tbody id="scoreTable"></tbody>
             </table>
           </div>
+
           <div class="statgrid">
             <div>
-              <strong>+0.0360</strong><span>DistilBERT minus LR macro-F1</span>
+              <strong>+0.0360</strong>
+              <span>DistilBERT minus LR macro-F1</span>
             </div>
             <div>
-              <strong>[0.0088, 0.0610]</strong
-              ><span>95% product-cluster bootstrap interval</span>
+              <strong>[0.0088, 0.0610]</strong>
+              <span>95% product-cluster bootstrap interval</span>
             </div>
             <div>
-              <strong>34 seconds</strong
-              ><span>Training on NVIDIA A100, two epochs</span>
+              <strong>34 seconds</strong>
+              <span>Training on NVIDIA A100, two epochs</span>
             </div>
           </div>
+
           <h3>What improved?</h3>
           <p>
             DistilBERT corrected 90 baseline mistakes and introduced 57 errors
@@ -172,6 +231,7 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
             validation macro-F1 (0.7995 versus 0.7985 at epoch 2). Neutral was
             the hardest class: test F1 0.7231.
           </p>
+
           <h3>What the result cannot establish</h3>
           <p>
             The interval describes uncertainty over sampled products for these
@@ -180,17 +240,20 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
             All_Beauty sample does not represent all Amazon categories or
             natural rating prevalence.
           </p>
+
           <p class="small">
             Live browser inference uses Logistic Regression. DistilBERT scores
             above come from the completed Colab experiment; its saved weights
             are not loaded by this page.
           </p>
+
           <details>
             <summary>Dataset and training details</summary>
             <pre id="protocol"></pre>
           </details>
         </article>
       </section>
+
       <section id="extraction" class="panel">
         <article class="card">
           <p class="eyebrow">04 / A NEGATIVE RESULT WORTH EXPLAINING</p>
@@ -200,6 +263,7 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
             few-shot prompting · 30 human-reviewed, AI-assisted annotation
             records.
           </p>
+
           <div class="tablewrap">
             <table>
               <thead>
@@ -237,12 +301,14 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
               </tbody>
             </table>
           </div>
+
           <div class="note">
             The original protocol rejects an entire output if any component
             fails. Those primary results are preserved. A separate
             <strong>post-hoc</strong> component audit found aspect F1 of 0.1509
             / 0.1333; these are diagnostics, not replacement primary scores.
           </div>
+
           <h3>Typical failures</h3>
           <div class="failuregrid">
             <div>
@@ -267,42 +333,49 @@ The packaging looks attractive, but the bottle leaked and the scent faded quickl
               </p>
             </div>
           </div>
+
           <h3>Try the validation idea</h3>
           <p>
             Enter a term and evidence quote that appear exactly in the source
             text. This is a deterministic substring check—not an LLM and not a
             semantic correctness test.
           </p>
-          <label for="auditText">Source review</label
-          ><textarea id="auditText">
+
+          <label for="auditText">Source review</label>
+          <textarea id="auditText">
 The scent is lovely, but the packaging leaked.</textarea
           >
+
           <div class="grid">
             <div>
-              <label for="auditTerm">Aspect term</label
-              ><input id="auditTerm" value="packaging" />
+              <label for="auditTerm">Aspect term</label>
+              <input id="auditTerm" value="packaging" />
             </div>
             <div>
-              <label for="auditQuote">Evidence quote</label
-              ><input id="auditQuote" value="the packaging leaked" />
+              <label for="auditQuote">Evidence quote</label>
+              <input id="auditQuote" value="the packaging leaked" />
             </div>
           </div>
+
           <button id="audit" class="secondary">Check exact grounding</button>
           <p id="auditResult" role="status"></p>
+
           <h3>Emotion exploration</h3>
           <p>
             The companion Python application includes an optional 28-label
-            GoEmotions explorer from Lecture 3. Emotion prediction is separate
-            from star-rating sentiment, and Amazon emotion accuracy was not
-            measured. No emotion score is fabricated by this browser demo.
+            GoEmotions explorer. Emotion prediction is separate from star-rating
+            sentiment, and Amazon emotion accuracy was not measured. No emotion
+            score is fabricated by this browser demo.
           </p>
         </article>
       </section>
+
       <footer>
-        <span>1704552 / MAAI 902 </span
-        ><span>Historical data. Measured results. Visible limitations.</span>
+        <span>1704552 / MAAI 902</span>
+        <span> Historical data. Measured results. Visible limitations. </span>
       </footer>
     </main>
+
     <script type="module" src="app.mjs"></script>
   </body>
 </html>
